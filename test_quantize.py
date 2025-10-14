@@ -87,7 +87,34 @@ class SimpleTrainer2d:
         self.logwriter.write("Eval time:{:.8f}s, FPS:{:.4f}".format(end_time, 1/end_time))
         self.logwriter.write("PSNR:{:.4f}, MS_SSIM:{:.6f}, bpp:{:.4f}".format(psnr, ms_ssim_value, data_dict["bpp"]))
         self.logwriter.write("position_bpp:{:.4f}, cholesky_bpp:{:.4f}, feature_dc_bpp:{:.4f}".format(data_dict["position_bpp"], data_dict["cholesky_bpp"], data_dict["feature_dc_bpp"]))
-        return data_dict
+        return data_dict, encoding_dict
+    
+    def test_encoding_dict(self, encoding_dict):
+        self.gaussian_model.eval()
+        with torch.no_grad():
+            out = self.gaussian_model.decompress_wo_ec(encoding_dict)
+            start_time = time.time()
+            for i in range(100):
+                _ = self.gaussian_model.decompress_wo_ec(encoding_dict)
+            end_time = (time.time() - start_time)/100
+        data_dict = self.gaussian_model.analysis_wo_ec(encoding_dict)
+    
+        out_img = out["render"].float()
+        img = out_img.clamp(0, 1)  # 如果值在[0,1]区间外，先clip一下
+        mse_loss = F.mse_loss(out_img, self.gt_image)
+        psnr = 10 * math.log10(1.0 / mse_loss.item())
+        ms_ssim_value = ms_ssim(out_img, self.gt_image, data_range=1, size_average=True).item()
+        
+        data_dict["psnr"] = psnr
+        data_dict["ms-ssim"] = ms_ssim_value
+        data_dict["rendering_time"] = end_time
+        data_dict["rendering_fps"] = 1/end_time
+        np.save(self.log_dir / "test.npy", data_dict)
+        self.logwriter.write("Eval time:{:.8f}s, FPS:{:.4f}".format(end_time, 1/end_time))
+        self.logwriter.write("PSNR:{:.4f}, MS_SSIM:{:.6f}, bpp:{:.4f}".format(psnr, ms_ssim_value, data_dict["bpp"]))
+        self.logwriter.write("position_bpp:{:.4f}, cholesky_bpp:{:.4f}, feature_dc_bpp:{:.4f}".format(data_dict["position_bpp"], data_dict["cholesky_bpp"], data_dict["feature_dc_bpp"]))
+        return data_dict, img
+
 
 
 def image_path_to_tensor(image_path: Path):
