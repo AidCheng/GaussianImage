@@ -1,3 +1,0 @@
-Eval time:0.00050462s, FPS:1981.6889
-PSNR:28.1612, MS_SSIM:0.948305, bpp:1.2861
-position_bpp:0.7324, cholesky_bpp:0.4125, feature_dc_bpp:0.1412

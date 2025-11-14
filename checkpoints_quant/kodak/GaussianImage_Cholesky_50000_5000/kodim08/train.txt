@@ -1,3 +1,0 @@
-Test PSNR:22.6056, MS_SSIM:0.928052, bpp:0.6823
-Best Test PSNR:22.9239, MS_SSIM:0.933065, bpp:0.6818
-Training Complete in 331.6207s, Eval time:0.00391404s, FPS:255.4902
