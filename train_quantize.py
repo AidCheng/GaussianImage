@@ -104,7 +104,8 @@ class SimpleTrainer2d:
         self.gt_image = self.gt_image.float()
         mse_loss = F.mse_loss(out_img, self.gt_image)
         psnr = 10 * math.log10(1.0 / mse_loss.item())
-        ms_ssim_value = ms_ssim(out["render"].float(), self.gt_image.float(), data_range=1, size_average=True).item()
+        # ms_ssim_value = ms_ssim(out["render"].float(), self.gt_image.float(), data_range=1, size_average=True).item()
+        ms_ssim_value = 0
         m_bit, s_bit, r_bit, c_bit = out["unit_bit"]
         bpp = (m_bit + s_bit + r_bit + c_bit)/self.H/self.W
 
@@ -184,6 +185,8 @@ def main(argv):
         image_length, start = 24, 0
     elif args.data_name == "DIV2K_valid_LRX2":
         image_length, start = 100, 800
+    elif args.data_name == "afhq":
+        image_length, start = 416, 0
 
     for i in range(start, start+image_length):
         if args.data_name == "kodak":
@@ -192,6 +195,9 @@ def main(argv):
         elif args.data_name == "DIV2K_valid_LRX2":
             image_path = Path(args.dataset) /  f'{i+1:04}x2.png'
             model_path = Path(args.model_path) / f'{i+1:04}x2' / 'gaussian_model.pth.tar'
+        elif args.data_name == "afhq":
+            image_path = Path(args.dataset) / f'afhq{i:02}.jpg'
+            model_path = Path(args.model_path) / f'afhq{i:02}' / 'gaussian_model.pth.tar'
         
         trainer = SimpleTrainer2d(image_path=image_path, num_points=args.num_points, 
             iterations=args.iterations, model_name=args.model_name, args=args, model_path=model_path)
@@ -212,14 +218,16 @@ def main(argv):
             image_name, trainer.H, trainer.W, psnr, ms_ssim, bpp, best_psnr, best_ms_ssim, best_bpp, training_time, eval_time, eval_fps))
 
     avg_psnr = torch.tensor(psnrs).mean().item()
-    avg_ms_ssim = torch.tensor(ms_ssims).mean().item()
+    # avg_ms_ssim = torch.tensor(ms_ssims).mean().item()
+    avg_ms_ssim = 0.0
     avg_training_time = torch.tensor(training_times).mean().item()
     avg_eval_time = torch.tensor(eval_times).mean().item()
     avg_eval_fps = torch.tensor(eval_fpses).mean().item()
     avg_bpp = torch.tensor(bpps).mean().item()
 
     avg_best_psnr = torch.tensor(best_psnrs).mean().item()
-    avg_best_ms_ssim = torch.tensor(best_ms_ssims).mean().item()
+    # avg_best_ms_ssim = torch.tensor(best_ms_ssims).mean().item()
+    avg_best_ms_ssim = 0.0
     avg_best_bpp = torch.tensor(best_bpps).mean().item()
     avg_h = image_h//image_length
     avg_w = image_w//image_length

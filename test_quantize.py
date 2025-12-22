@@ -77,7 +77,8 @@ class SimpleTrainer2d:
         out_img = out["render"].float()
         mse_loss = F.mse_loss(out_img, self.gt_image)
         psnr = 10 * math.log10(1.0 / mse_loss.item())
-        ms_ssim_value = ms_ssim(out_img, self.gt_image, data_range=1, size_average=True).item()
+        # ms_ssim_value = ms_ssim(out_img, self.gt_image, data_range=1, size_average=True).item()
+        ms_ssim_value = 0
         
         data_dict["psnr"] = psnr
         data_dict["ms-ssim"] = ms_ssim_value
@@ -182,6 +183,8 @@ def main(argv):
         image_length, start = 24, 0
     elif args.data_name == "DIV2K_valid_LRX2":
         image_length, start = 100, 800
+    elif args.data_name == "afhq":
+        image_length, start = 416, 0
     for i in range(start, start+image_length):
         if args.data_name == "kodak":
             image_path = Path(args.dataset) / f'kodim{i+1:02}.png'
@@ -189,10 +192,13 @@ def main(argv):
         elif args.data_name == "DIV2K_valid_LRX2":
             image_path = Path(args.dataset) /  f'{i+1:04}x2.png'
             model_path = Path(args.model_path) / f'{i+1:04}x2' / 'gaussian_model.best.pth.tar'
+        elif args.data_name == "afhq":
+            image_path = Path(args.dataset) / f'afhq{i:02}.jpg'
+            model_path = Path(args.model_path) / f'afhq{i:02}' / 'gaussian_model.best.pth.tar'
         trainer = SimpleTrainer2d(image_path=image_path, num_points=args.num_points, 
             iterations=args.iterations, model_name=args.model_name, args=args, model_path=model_path)
 
-        data_dict = trainer.test()
+        data_dict, _ = trainer.test()
         psnrs.append(data_dict["psnr"])
         ms_ssims.append(data_dict["ms-ssim"])
         eval_times.append(data_dict["rendering_time"])
@@ -210,7 +216,8 @@ def main(argv):
             data_dict["position_bpp"], data_dict["cholesky_bpp"], data_dict["feature_dc_bpp"]))
 
     avg_psnr = torch.tensor(psnrs).mean().item()
-    avg_ms_ssim = torch.tensor(ms_ssims).mean().item()
+    # avg_ms_ssim = torch.tensor(ms_ssims).mean().item()
+    avg_ms_ssim = 0.0
     avg_eval_time = torch.tensor(eval_times).mean().item()
     avg_eval_fps = torch.tensor(eval_fpses).mean().item()
     avg_bpp = torch.tensor(bpps).mean().item()
